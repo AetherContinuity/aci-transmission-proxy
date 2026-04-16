@@ -1,4 +1,4 @@
-// ACI Fingrid Transmission Proxy — v2
+// ACI Fingrid Transmission Proxy — v3: kokeile eri header-nimiä
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -16,29 +16,22 @@ export default {
     }
 
     const url = new URL(request.url);
-    const ds    = Number(url.searchParams.get('ds'));
+    const ds   = Number(url.searchParams.get('ds'));
     const start = url.searchParams.get('start');
     const end   = url.searchParams.get('end');
     const size  = url.searchParams.get('size') || '168';
 
     if (!ds || !ALLOWED.has(ds)) {
       return new Response(JSON.stringify({
-        error: `DS ${ds} not supported`,
-        allowed: [...ALLOWED]
+        error: `DS ${ds} not supported`, allowed: [...ALLOWED]
       }), { status: 400, headers: CORS });
     }
 
-    // Kokeile molempia ympäristömuuttujien nimiä
-    const apiKey = env.FINGRID_NEW_API_KEY
-                || env.FINGRID_API_KEY
-                || env.API_KEY
-                || '';
+    const apiKey = env.FINGRID_NEW_API_KEY || '';
 
     if (!apiKey) {
       return new Response(JSON.stringify({
-        error: 'No API key found',
-        tried: ['FINGRID_NEW_API_KEY', 'FINGRID_API_KEY', 'API_KEY'],
-        envKeys: Object.keys(env)
+        error: 'No API key', envKeys: Object.keys(env)
       }), { status: 500, headers: CORS });
     }
 
@@ -46,39 +39,40 @@ export default {
     if (start) apiUrl += `&startTime=${encodeURIComponent(start)}`;
     if (end)   apiUrl += `&endTime=${encodeURIComponent(end)}`;
 
+    // Kokeile subscription key myös query paramina varmuuden vuoksi
+    const apiUrlWithKey = apiUrl + `&subscription-key=${encodeURIComponent(apiKey)}`;
+
+    const results = {};
+
+    // Testi 1: x-functions-key header
     try {
-      const resp = await fetch(apiUrl, {
-        headers: {
-          'x-functions-key': apiKey,
-          'Accept': 'application/json',
-          'User-Agent': 'ACI-Transmission-Proxy/2.0'
-        }
+      const r1 = await fetch(apiUrl, {
+        headers: { 'x-functions-key': apiKey, 'Accept': 'application/json' }
       });
+      const t1 = await r1.text();
+      results.header_x_functions_key = { status: r1.status, preview: t1.slice(0,100) };
+    } catch(e) { results.header_x_functions_key = { error: e.message }; }
 
-      const text = await resp.text();
+    // Testi 2: Ocp-Apim-Subscription-Key header (Azure API Management standardi)
+    try {
+      const r2 = await fetch(apiUrl, {
+        headers: { 'Ocp-Apim-Subscription-Key': apiKey, 'Accept': 'application/json' }
+      });
+      const t2 = await r2.text();
+      results.header_ocp_apim = { status: r2.status, preview: t2.slice(0,100) };
+    } catch(e) { results.header_ocp_apim = { error: e.message }; }
 
-      if (!resp.ok) {
-        return new Response(JSON.stringify({
-          error: `Fingrid API ${resp.status}`,
-          preview: text.slice(0, 200),
-          hasKey: !!apiKey,
-          keyLength: apiKey.length,
-          ds
-        }), { status: resp.status, headers: CORS });
-      }
+    // Testi 3: query param
+    try {
+      const r3 = await fetch(apiUrlWithKey, {
+        headers: { 'Accept': 'application/json' }
+      });
+      const t3 = await r3.text();
+      results.query_param = { status: r3.status, preview: t3.slice(0,100) };
+    } catch(e) { results.query_param = { error: e.message }; }
 
-      const json = JSON.parse(text);
-      const rows = json.data || (Array.isArray(json) ? json : []);
-      return new Response(JSON.stringify({
-        data: rows,
-        ds,
-        total: json.pagination?.total ?? rows.length,
-        fetched: new Date().toISOString()
-      }), { headers: CORS });
-
-    } catch (err) {
-      return new Response(JSON.stringify({ error: err.message, ds }),
-        { status: 500, headers: CORS });
-    }
+    return new Response(JSON.stringify({
+      debug: true, ds, keyLength: apiKey.length, results
+    }), { headers: CORS });
   }
 };
