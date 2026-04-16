@@ -7,7 +7,7 @@ const CORS = {
   'Content-Type': 'application/json'
 };
 
-const ALLOWED = new Set([24,26,25,27,70,71,180,31,32,44,39]);
+const ALLOWED = new Set([24,26,25,27,70,71,180,31,32,44,39,105,74]);
 
 export default {
   async fetch(request, env) {
