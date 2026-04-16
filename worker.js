@@ -44,6 +44,18 @@ const ALLOWED = new Set([
   365,  // Kulutuksen keskihajonta käyttäjäryhmittäin
   362,  // Pientuotannon ylijäämä tuotantotyypeittäin
   358,  // Kulutus asiakastyypin mukaan
+  // Congestion income
+  70,   // Congestion income FI-SE1
+  71,   // Congestion income FI-SE3
+  48,   // Congestion income FI-EE
+  // Muut
+  369,  // mFRR säätösuunta (-1/0/1)
+  396,  // CO2 päästökerroin gCO2/kWh
+  395,  // Fossiilittoman tuotannon osuus %
+  342,  // Aktivoitu mFRR MW
+  382,  // Agreed supportive power FI-SE1
+  383,  // Agreed supportive power FI-SE3
+  384,  // Agreed supportive power FI-EE
 ]);
 
 export default {
