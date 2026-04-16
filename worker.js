@@ -38,6 +38,12 @@ const ALLOWED = new Set([
   378,  // mFRR flow FI-SE1
   379,  // mFRR flow FI-SE3
   380,  // mFRR flow FI-EE
+  // Jakeluverkko — kulutus
+  363,  // Kokonaiskulutus jakeluverkoissa (kWh/h)
+  360,  // Kulutus käyttäjäryhmittäin
+  365,  // Kulutuksen keskihajonta käyttäjäryhmittäin
+  362,  // Pientuotannon ylijäämä tuotantotyypeittäin
+  358,  // Kulutus asiakastyypin mukaan
 ]);
 
 export default {
