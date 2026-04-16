@@ -56,6 +56,39 @@ const ALLOWED = new Set([
   382,  // Agreed supportive power FI-SE1
   383,  // Agreed supportive power FI-SE3
   384,  // Agreed supportive power FI-EE
+  // Järjestelmän tila
+  336,  // Electricity shortage status 0-3 (3 min) — suora Black Period -mittari
+  209,  // Power system state (3 min)
+  177,  // Frequency Hz (3 min)
+  198,  // Surplus/deficit real-time MW (3 min)
+  186,  // Surplus/deficit cumulative MW (3 min)
+  // Sisäinen siirto
+  30,   // Transmission north to south (1 min) — ainoa sisäinen siirtomittari
+  28,   // Planned weekly capacity north to south
+  29,   // Planned weekly capacity south to north
+  // OL3 ja tuotanto
+  372,  // OL3 protection scheme forecast MW/h
+  188,  // Nuclear power production real-time (3 min)
+  191,  // Hydro power production real-time (3 min)
+  181,  // Wind power production real-time (3 min)
+  201,  // CHP district heating real-time (3 min)
+  202,  // Industrial cogeneration real-time (3 min)
+  205,  // Reserve power plants real-time (3 min)
+  // CO2
+  265,  // CO2 emission factor real-time (3 min)
+  266,  // CO2 emission factor production real-time (3 min)
+  // Lämpötila
+  178,  // Temperature Helsinki (3 min)
+  182,  // Temperature Jyväskylä (3 min)
+  185,  // Temperature Rovaniemi (3 min)
+  196,  // Temperature Oulu (3 min)
+  // Akut
+  398,  // Battery storage discharging (3 min)
+  399,  // Battery storage charging (3 min)
+  424,  // Total installed battery capacity MW
+  // Sähköpula-indikaattorit
+  183,  // Peak load power real-time (3 min)
+  371,  // Electric boiler consumption (1 min)
 ]);
 
 export default {
