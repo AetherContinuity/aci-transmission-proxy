@@ -64,6 +64,10 @@ const ALLOWED = new Set([
   186,  // Surplus/deficit cumulative MW (3 min)
   // Sisäinen siirto
   30,   // Transmission north to south (1 min) — ainoa sisäinen siirtomittari
+  87,   // SE1→FI real-time (3 min) — WEM §12 TRR
+  89,   // SE3→FI real-time (3 min)
+  187,  // NO→FI real-time (3 min)
+  194,  // Net import/export real-time (3 min)
   28,   // Planned weekly capacity north to south
   29,   // Planned weekly capacity south to north
   // OL3 ja tuotanto
