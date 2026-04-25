@@ -1,4 +1,4 @@
-// ACI Fingrid Transmission Proxy — v4: oikea header x-api-key
+// ACI Fingrid Transmission Proxy — v5: lisätty DS 245/246 tuuliennuste
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -93,6 +93,9 @@ const ALLOWED = new Set([
   // Sähköpula-indikaattorit
   183,  // Peak load power real-time (3 min)
   371,  // Electric boiler consumption (1 min)
+  // Tuuliennuste
+  245,  // Wind power forecast 72h (15 min updates)
+  246,  // Wind power forecast 24h (daily update)
 ]);
 
 export default {
