@@ -116,16 +116,13 @@ function ttlForDs(ds) {
   return 300;                         // 5 min — oletus 15 min -sarjoille
 }
 
+// Workers Cache (wrangler.toml [cache] enabled = true), ei Cache API:a
+// (caches.default) — se ei toimi workers.dev-osoitteissa. Cache-Control-
+// otsikko riittää; Cloudflare hoitaa haun ja tallennuksen itse.
 export default {
-  async fetch(request, env, ctx) {
+  async fetch(request, env) {
     if (request.method === 'OPTIONS') {
       return new Response(null, { headers: CORS });
-    }
-
-    const cache = caches.default;
-    if (request.method === 'GET') {
-      const hit = await cache.match(request);
-      if (hit) return hit;
     }
 
     const url = new URL(request.url);
@@ -183,7 +180,6 @@ export default {
       if (request.method === 'GET') {
         const ttl = ttlForDs(ds);
         response.headers.set('Cache-Control', `public, max-age=${ttl}`);
-        ctx.waitUntil(cache.put(request, response.clone()));
       }
       return response;
 

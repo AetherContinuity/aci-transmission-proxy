@@ -20,7 +20,11 @@ Requires FINGRID_NEW_API_KEY environment variable (Cloudflare Secret).
 
 ## Cache
 
-Cloudflare Cache API (`caches.default`). TTL is per-`ds`, matched to that
-dataset's own update cadence (see `ttlForDs` in worker.js): 3 min for
+Workers Cache (`wrangler.toml`: `[cache]` `enabled = true`) — not the
+Cache API (`caches.default`), which doesn't work on workers.dev (it's
+zone-scoped and would be shared across every workers.dev tenant). The
+worker only sets `Cache-Control`; Cloudflare checks and stores the cache
+itself, before the worker even runs on a hit. TTL is per-`ds`, matched to
+that dataset's own update cadence (see `ttlForDs` in worker.js): 3 min for
 real-time telemetry, 1 h for daily/weekly/static values, 5 min default for
 everything in between (mostly the 15-min series).
