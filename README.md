@@ -17,3 +17,10 @@ GET https://aci-transmission-proxy.ruotsalainen-marko.workers.dev/?ds=24&start=2
 
 ## Auth
 Requires FINGRID_NEW_API_KEY environment variable (Cloudflare Secret).
+
+## Cache
+
+Cloudflare Cache API (`caches.default`). TTL is per-`ds`, matched to that
+dataset's own update cadence (see `ttlForDs` in worker.js): 3 min for
+real-time telemetry, 1 h for daily/weekly/static values, 5 min default for
+everything in between (mostly the 15-min series).

@@ -98,10 +98,34 @@ const ALLOWED = new Set([
   246,  // Wind power forecast 24h (daily update)
 ]);
 
+// TTL porrastettu ds:n oman mittaustaajuuden mukaan (ks. kommentit
+// ALLOWED-listassa) — ei yksi luku kaikille. 3 min -telemetria saa
+// lyhyimmän TTL:n ettei hälytystyyppinen data (esim. DS 336) jää
+// liian vanhaksi; päivä-/viikkotason arvot pisimmän.
+const TTL_FAST = new Set([          // ~1-3 min telemetria
+  180, 378, 379, 380, 369, 342, 336, 209, 177, 198, 186, 30, 87, 89, 187, 194,
+  188, 191, 181, 201, 202, 205, 265, 266, 178, 182, 185, 196, 398, 399, 183, 371
+]);
+const TTL_SLOW = new Set([          // päivä-/viikkotaso tai lähes staattinen
+  24, 26, 25, 27, 112, 115, 31, 32, 140, 382, 383, 384,
+  363, 360, 365, 362, 358, 70, 71, 48, 28, 29, 246, 424
+]);
+function ttlForDs(ds) {
+  if (TTL_FAST.has(ds)) return 180;   // 3 min
+  if (TTL_SLOW.has(ds)) return 3600;  // 1 h
+  return 300;                         // 5 min — oletus 15 min -sarjoille
+}
+
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     if (request.method === 'OPTIONS') {
       return new Response(null, { headers: CORS });
+    }
+
+    const cache = caches.default;
+    if (request.method === 'GET') {
+      const hit = await cache.match(request);
+      if (hit) return hit;
     }
 
     const url = new URL(request.url);
@@ -150,12 +174,18 @@ export default {
 
       const json = JSON.parse(text);
       const rows = json.data || (Array.isArray(json) ? json : []);
-      return new Response(JSON.stringify({
+      const response = new Response(JSON.stringify({
         data: rows,
         ds,
         total: json.pagination?.total ?? rows.length,
         fetched: new Date().toISOString()
       }), { headers: CORS });
+      if (request.method === 'GET') {
+        const ttl = ttlForDs(ds);
+        response.headers.set('Cache-Control', `public, max-age=${ttl}`);
+        ctx.waitUntil(cache.put(request, response.clone()));
+      }
+      return response;
 
     } catch (err) {
       return new Response(JSON.stringify({ error: err.message, ds }),
