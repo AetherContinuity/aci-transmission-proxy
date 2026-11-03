@@ -31,9 +31,21 @@ Each result carries `served_by_proxy`: whether `?ds=` already serves it
 Cached 24 h. Field names are picked defensively — if Fingrid changes its
 schema a field comes back `null`, never invented; check with `raw=1`.
 
-**Not live-tested** at the time of writing (data.fingrid.fi was not
-reachable from the authoring environment). First calls after deploy:
-`?catalog=siirto&raw=1`, then `?meta=30`.
+Live-tested 3.11.2026: field names `nameFi`, `nameEn`, `unitFi`,
+`dataPeriodFi` confirmed. `status` is present in `?meta=` but not in search
+results, so use `?meta=` to check whether a dataset is active. Fingrid
+returns 429 when catalogue calls come faster than ~8 s apart; the proxy
+passes it through as an error, not as an empty list.
+
+## Inactive datasets (v7)
+
+Datasets Fingrid marks `inactive` are still served (history is useful) but
+the response gets `"status":"inactive"` and a `_warning`. Reason: DS 142
+keeps returning a plausible constant (1900 MW in 2026, 0 MW in 11/2024)
+after its updates ended — the same failure class as DS 105's constant zero.
+List: 24–29, 48, 70, 71, 112, 115, 142 (checked with `?meta=` 3.11.2026).
+
+Intraday free capacity added: 38/44 (SE1), 39/45 (SE3), 110/113 (EE).
 
 ## Auth
 Requires FINGRID_NEW_API_KEY environment variable (Cloudflare Secret).

@@ -1,4 +1,5 @@
-// ACI Fingrid Transmission Proxy — v6: luettelohaku (?catalog= / ?meta=)
+// ACI Fingrid Transmission Proxy — v7: inactive-varoitus, ID-kapasiteetit 38/39/44/45/110/113
+// v6: luettelohaku (?catalog= / ?meta=)
 // v5: lisätty DS 245/246 tuuliennuste
 
 const CORS = {
@@ -97,7 +98,37 @@ const ALLOWED = new Set([
   // Tuuliennuste
   245,  // Wind power forecast 72h (15 min updates)
   246,  // Wind power forecast 24h (daily update)
+  // Päivänsisäisen markkinan vapaa siirtokapasiteetti (aktiivisia, 15 min)
+  38,   // ID-kapasiteetti SE1→FI
+  44,   // ID-kapasiteetti FI→SE1
+  39,   // ID-kapasiteetti SE3→FI
+  45,   // ID-kapasiteetti FI→SE3
+  110,  // ID-kapasiteetti EE→FI
+  113,  // ID-kapasiteetti FI→EE
+  // Suunniteltu DA-kapasiteetti — INACTIVE, ks. INACTIVE alla
+  142,  // SE1→FI suunniteltu (SM-020:n 1900 MW nimittäjä)
 ]);
+
+// Fingridin oma status = inactive (tarkistettu ?meta=-reitillä 3.11.2026).
+// Näitä palvellaan yhä, koska historiallinen data on käyttökelpoista,
+// mutta vastaukseen lisätään varoitus. Syy: DS 142 palauttaa lakkautettuna
+// uskottavan vakioarvon (1900 MW 2026, mutta 0 MW 11/2024) — sama
+// vikaluokka kuin DS 105:n vakionolla. Ilman varoitusta lakkautettu sarja
+// luetaan nykytilaksi.
+const INACTIVE = {
+  24: 'päivitys päättyi 29.10.2024 (flow-based)',
+  25: 'päivitys päättyi 29.10.2024 (flow-based)',
+  26: 'päivitys päättyi 29.10.2024 (flow-based)',
+  27: 'päivitys päättyi 29.10.2024 (flow-based)',
+  112: 'päivitys päättyi (Fingrid: 29.9.)',
+  115: 'päivitys päättyi (flow-based)',
+  28: 'P1-viikkokapasiteetti lakkautettu',
+  29: 'P1-viikkokapasiteetti lakkautettu',
+  48: 'inactive, päättymispäivää ei kuvauksessa',
+  70: 'inactive, päättymispäivää ei kuvauksessa',
+  71: 'inactive, päättymispäivää ei kuvauksessa',
+  142: 'päivitys päättyy 30.10 (Fingrid); arvot jatkuvat vakiona — EI nykyinen kapasiteetti',
+};
 
 // TTL porrastettu ds:n oman mittaustaajuuden mukaan (ks. kommentit
 // ALLOWED-listassa) — ei yksi luku kaikille. 3 min -telemetria saa
@@ -285,12 +316,18 @@ export default {
 
       const json = JSON.parse(text);
       const rows = json.data || (Array.isArray(json) ? json : []);
-      const response = new Response(JSON.stringify({
+      const body = {
         data: rows,
         ds,
         total: json.pagination?.total ?? rows.length,
         fetched: new Date().toISOString()
-      }), { headers: CORS });
+      };
+      if (INACTIVE[ds]) {
+        body.status = 'inactive';
+        body._warning = `Fingrid: tietoaineisto lakkautettu — ${INACTIVE[ds]}. ` +
+                        'Arvot eivät välttämättä kuvaa nykytilaa.';
+      }
+      const response = new Response(JSON.stringify(body), { headers: CORS });
       if (request.method === 'GET') {
         const ttl = ttlForDs(ds);
         response.headers.set('Cache-Control', `public, max-age=${ttl}`);
