@@ -15,6 +15,26 @@ GET https://aci-transmission-proxy.ruotsalainen-marko.workers.dev/?ds=24&start=2
 - DS 31: Commercial flow FI↔SE1
 - DS 32: Commercial flow FI↔SE3
 
+## Catalog search (v6)
+
+Find dataset ids by name instead of guessing them. A wrong id returns a
+plausible-looking series (DS 105 returned constant zero), so ids should
+come from Fingrid's own catalogue.
+
+    GET ?catalog=siirto                 search, Finnish or English
+    GET ?catalog=transmission&page=2    next page (pageSize 100)
+    GET ?meta=30                        one dataset's description
+    add &raw=1                          Fingrid's response unmodified
+
+Each result carries `served_by_proxy`: whether `?ds=` already serves it
+(the ALLOWED list). Catalogue routes are not restricted by ALLOWED.
+Cached 24 h. Field names are picked defensively — if Fingrid changes its
+schema a field comes back `null`, never invented; check with `raw=1`.
+
+**Not live-tested** at the time of writing (data.fingrid.fi was not
+reachable from the authoring environment). First calls after deploy:
+`?catalog=siirto&raw=1`, then `?meta=30`.
+
 ## Auth
 Requires FINGRID_NEW_API_KEY environment variable (Cloudflare Secret).
 
